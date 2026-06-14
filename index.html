@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精听训练工具</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部标题 -->
+        <header class="header">
+            <h1>精听训练</h1>
+        </header>
+
+        <!-- 音频上传区域 -->
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-card">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h2>选择音频文件</h2>
+                <p>支持 MP3、WAV、M4A 格式</p>
+                <input type="file" id="audioInput" accept="audio/*" hidden>
+                <button class="btn-primary" onclick="document.getElementById('audioInput').click()">
+                    选择文件
+                </button>
+            </div>
+        </div>
+
+        <!-- 训练界面 -->
+        <div class="training-section" id="trainingSection" style="display: none;">
+            <!-- 进度指示器 -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">1 / 10</div>
+
+            <!-- 主播放区域 -->
+            <div class="player-card">
+                <div class="waveform" id="waveform">
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                    <div class="waveform-bar"></div>
+                </div>
+
+                <!-- 答案显示区域 -->
+                <div class="answer-section" id="answerSection">
+                    <div class="answer-placeholder" id="answerPlaceholder">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                        <p>点击查看答案</p>
+                    </div>
+                    <div class="answer-content" id="answerContent" style="display: none;">
+                        <div class="answer-english" id="answerEnglish"></div>
+                        <div class="answer-chinese" id="answerChinese"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 控制按钮 -->
+            <div class="controls">
+                <button class="btn-control" id="prevBtn" title="上一句">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/>
+                    </svg>
+                </button>
+
+                <button class="btn-play" id="playBtn">
+                    <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
+                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                    </svg>
+                </button>
+
+                <button class="btn-control" id="nextBtn" title="下一句">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- 速度控制 -->
+            <div class="speed-control">
+                <label>播放速度</label>
+                <div class="speed-buttons">
+                    <button class="btn-speed" data-speed="0.5">0.5x</button>
+                    <button class="btn-speed" data-speed="0.75">0.75x</button>
+                    <button class="btn-speed active" data-speed="1">1.0x</button>
+                    <button class="btn-speed" data-speed="1.25">1.25x</button>
+                    <button class="btn-speed" data-speed="1.5">1.5x</button>
+                    <button class="btn-speed" data-speed="2">2.0x</button>
+                </div>
+            </div>
+
+            <!-- 底部操作 -->
+            <div class="bottom-actions">
+                <button class="btn-secondary" id="autoRecognizeBtn">自动识别</button>
+                <button class="btn-secondary" id="addTextBtn">手动添加</button>
+                <button class="btn-secondary" id="resetBtn">重新选择</button>
+            </div>
+        </div>
+
+        <!-- 识别配置弹窗 -->
+        <div class="modal" id="recognizeModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>浏览器语音识别</h2>
+                    <button class="modal-close" id="closeRecognizeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="recognizeSetup">
+                        <p class="modal-hint" style="margin-bottom: 16px;">
+                            <strong>使用浏览器内置语音识别：</strong><br>
+                            ✅ 完全免费，无需注册<br>
+                            ✅ 支持中英文识别<br>
+                            ✅ Chrome/Edge 浏览器内置<br><br>
+                            <strong>两种识别方式：</strong><br>
+                            1️⃣ <strong>逐句识别</strong>（推荐）：点击"查看答案"自动识别当前句子<br>
+                            2️⃣ <strong>批量识别</strong>：一次性识别所有句子
+                        </p>
+                        <div class="form-group">
+                            <label for="languageSelect">识别语言</label>
+                            <select id="languageSelect" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px;">
+                                <option value="en-US">英语 (English)</option>
+                                <option value="zh-CN">中文 (Chinese)</option>
+                            </select>
+                        </div>
+                        <div class="api-info">
+                            <p><strong>注意事项：</strong></p>
+                            <ul>
+                                <li>需要使用 Chrome 或 Edge 浏览器</li>
+                                <li>首次使用需要授权麦克风权限（仅用于识别音频文件）</li>
+                                <li>识别过程中请保持页面打开</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="recognizeProgress" style="display:none;">
+                        <div class="recognize-status">
+                            <div class="recognize-icon active">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                                </svg>
+                            </div>
+                            <p id="recognizeStatusText">正在识别...</p>
+                            <div class="recognize-progress">
+                                <div class="recognize-progress-bar" id="recognizeProgressBar"></div>
+                            </div>
+                            <p class="recognize-progress-label" id="recognizeProgressLabel">0 / 0</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancelRecognizeBtn">取消</button>
+                    <button class="btn-primary" id="batchRecognizeBtn">批量识别全部</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 文本输入弹窗 -->
+        <div class="modal" id="textModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>添加文本数据</h2>
+                    <button class="modal-close" id="closeModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-hint">每行一个句子，格式：英文|中文翻译</p>
+                    <p class="modal-hint" style="margin-top: 8px;">
+                        <strong>提示：</strong>可以使用剪映、网易见外等工具先转录音频，然后粘贴到这里。
+                        <a href="使用说明.md" target="_blank" style="color: var(--primary-color);">查看详细教程</a>
+                    </p>
+                    <textarea id="textInput" placeholder="例如：&#10;Hello, how are you?|你好，你好吗？&#10;I'm fine, thank you.|我很好，谢谢。&#10;&#10;如果只有英文没有翻译，格式为：&#10;Hello, how are you?|&#10;（点击查看答案时会自动翻译）"></textarea>
+                    <div class="modal-info">
+                        <span>已检测到 <strong id="segmentCount">0</strong> 个句子</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancelTextBtn">取消</button>
+                    <button class="btn-primary" id="saveTextBtn">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 加载提示 -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>正在分析音频...</p>
+        </div>
+    </div>
+
+    <script src="browser-asr.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
